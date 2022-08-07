@@ -1,0 +1,21 @@
+FROM debian:bullseye-slim
+
+LABEL maintainer="Richard Kojedzinszky <richard@kojedz.in>"
+
+RUN apt-get update && \
+    apt-get install -y reprepro dropbear-bin && \
+    rm -rf /var/lib/apt /var/cache/apt
+
+RUN groupadd -g 29295 reprepro && \
+    useradd -g reprepro -u 29295 -c "Reprepro User" -s /bin/sh \
+    -d /home/reprepro -M reprepro
+
+COPY assets-server /
+
+EXPOSE 2222
+
+WORKDIR /home/reprepro
+
+USER 29295
+
+CMD ["/usr/sbin/dropbear", "-p", "2222", "-E", "-F", "-r", ".ssh/server_key"]

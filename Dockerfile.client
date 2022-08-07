@@ -1,0 +1,16 @@
+FROM alpine:3.16
+
+LABEL maintainer="Richard Kojedzinszky <richard@kojedz.in>"
+
+RUN apk --no-cache add openssh-client
+
+RUN adduser -u 29296 -h /home/reprepro-client -D -H reprepro-client && \
+    mkdir /home/reprepro-client && chown reprepro-client: /home/reprepro-client
+
+COPY assets-client /
+
+WORKDIR /home/reprepro-client
+
+USER 29296
+
+CMD ["/bin/upload.sh"]
