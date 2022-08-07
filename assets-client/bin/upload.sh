@@ -2,10 +2,12 @@
 
 set -e
 
+cd $HOME
+
 prepare_dot_ssh()
 {
-	echo "$DOT_SSH" | base64 -d | tar xzf - -C $HOME
-	cat > $HOME/.ssh/config <<-EOF
+	echo "$DOT_SSH" | base64 -d | tar xzf -
+	cat > .ssh/config <<-EOF
 	Host *
 	 BatchMode=yes
 	 CheckHostIP=no
