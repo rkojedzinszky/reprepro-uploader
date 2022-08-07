@@ -25,4 +25,7 @@ reprepro_upload()
 }
 
 prepare_dot_ssh
+
+test -r .env && . .env
+
 reprepro_upload
