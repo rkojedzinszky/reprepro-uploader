@@ -1,9 +1,11 @@
 FROM debian:bullseye-slim
 
+ARG TARGETARCH
+
 LABEL maintainer="Richard Kojedzinszky <richard@kojedz.in>"
 
 RUN apt-get update && \
-    apt-get install -y reprepro dropbear-bin && \
+    apt-get install -y reprepro && \
     rm -rf /var/lib/apt /var/cache/apt
 
 RUN groupadd -g 29295 reprepro && \
@@ -12,10 +14,10 @@ RUN groupadd -g 29295 reprepro && \
 
 COPY assets-server /
 
-EXPOSE 2222
+COPY server.${TARGETARCH} /usr/local/bin/server
 
-WORKDIR /home/reprepro
+EXPOSE 8080
 
 USER 29295
 
-CMD ["/usr/sbin/dropbear", "-p", "2222", "-E", "-F", "-r", ".ssh/server_key"]
+CMD ["/usr/local/bin/server"]
