@@ -25,16 +25,14 @@ jobs:
         uses: actions/checkout@v3
 
       - uses: actions/setup-go@v3
-        if: matrix.component == 'server'
 
-      - name: Compile server
-        if: matrix.component == 'server'
+      - name: Compile
         env:
           CGO_ENABLED: 0
         run: |
-          GOARCH=amd64 go build -ldflags -s -o server.amd64 ./cmd/server/
-          GOARCH=arm   go build -ldflags -s -o server.arm   ./cmd/server/
-          GOARCH=arm64 go build -ldflags -s -o server.arm64 ./cmd/server/
+          GOARCH=amd64 go build -ldflags -s -o ${{ matrix.component }}.amd64 ./cmd/${{ matrix.component }}/
+          GOARCH=arm   go build -ldflags -s -o ${{ matrix.component }}.arm   ./cmd/${{ matrix.component }}/
+          GOARCH=arm64 go build -ldflags -s -o ${{ matrix.component }}.arm64 ./cmd/${{ matrix.component }}/
 
       - name: Setup qemu
         uses: docker/setup-qemu-action@v2
