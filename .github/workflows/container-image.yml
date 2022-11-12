@@ -14,12 +14,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        component:
-          - server
-          - client
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -30,9 +24,12 @@ jobs:
         env:
           CGO_ENABLED: 0
         run: |
-          GOARCH=amd64 go build -ldflags -s -o ${{ matrix.component }}.amd64 ./cmd/${{ matrix.component }}/
-          GOARCH=arm   go build -ldflags -s -o ${{ matrix.component }}.arm   ./cmd/${{ matrix.component }}/
-          GOARCH=arm64 go build -ldflags -s -o ${{ matrix.component }}.arm64 ./cmd/${{ matrix.component }}/
+          GOARCH=amd64 go build -ldflags -s -o server.amd64 ./cmd/server/
+          GOARCH=arm   go build -ldflags -s -o server.arm   ./cmd/server/
+          GOARCH=arm64 go build -ldflags -s -o server.arm64 ./cmd/server/
+          GOARCH=amd64 go build -ldflags -s -o client.amd64 ./cmd/client/
+          GOARCH=arm   go build -ldflags -s -o client.arm   ./cmd/client/
+          GOARCH=arm64 go build -ldflags -s -o client.arm64 ./cmd/client/
 
       - name: Setup qemu
         uses: docker/setup-qemu-action@v2
@@ -47,11 +44,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
+      - name: Extract metadata (tags, labels) for Server
+        id: servermeta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.component }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/server
           tags: |
             type=semver,pattern={{major}}.{{minor}}.{{patch}}
             type=semver,pattern={{major}}.{{minor}}
@@ -59,12 +56,34 @@ jobs:
             # set latest tag for default branch
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and publish
+      - name: Extract metadata (tags, labels) for Client
+        id: clientmeta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/client
+          tags: |
+            type=semver,pattern={{major}}.{{minor}}.{{patch}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            # set latest tag for default branch
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and publish server
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: "Dockerfile.${{ matrix.component }}"
+          file: Dockerfile.server
           platforms: linux/amd64, linux/arm/v7, linux/arm64/v8
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.servermeta.outputs.tags }}
+          labels: ${{ steps.servermeta.outputs.labels }}
+
+      - name: Build and publish client
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: Dockerfile.client
+          platforms: linux/amd64, linux/arm/v7, linux/arm64/v8
+          push: true
+          tags: ${{ steps.clientmeta.outputs.tags }}
+          labels: ${{ steps.clientmeta.outputs.labels }}
