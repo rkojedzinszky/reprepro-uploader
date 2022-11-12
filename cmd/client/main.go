@@ -61,6 +61,10 @@ func main() {
 	fmt.Print("\nResponse:\n\n")
 
 	io.Copy(os.Stdout, resp.Body)
+
+	if resp.StatusCode != http.StatusAccepted {
+		os.Exit(1)
+	}
 }
 
 func createTar(w io.WriteCloser) {
