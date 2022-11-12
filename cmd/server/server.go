@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"os/exec"
 	"strings"
 
@@ -71,18 +70,20 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		cmd.Stdin = r.Body
 	}
 
-	out := &bytes.Buffer{}
-	cmd.Stdout = out
-	cmd.Stderr = os.Stderr
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 
 	cmd.Env = append(cmd.Env, fmt.Sprintf("REPREPRO_REPOS=%s", strings.Join(claims.Distributions, " ")))
 
 	if err := cmd.Run(); err != nil {
 		log.Print("E: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(stderr.Bytes())
 		return
 	}
 
 	w.WriteHeader(http.StatusAccepted)
-	w.Write(out.Bytes())
+	w.Write(stdout.Bytes())
 }
