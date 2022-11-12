@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"log"
 	"net"
 	"net/http"
@@ -11,10 +12,11 @@ import (
 	"syscall"
 
 	"github.com/namsral/flag"
+	"github.com/rkojedzinszky/reprepro-uploader/pkg/token"
 )
 
 var (
-	token         = flag.String("token", "", "Bearer token used for authenticating clients")
+	jweSecret     = flag.String("jwe-secret", "", "Base64 encoded JWE token")
 	uploadUri     = flag.String("upload-uri", "/upload", "Upload uri")
 	repreproPath  = flag.String("reprepro-path", "/home/reprepro", "Path to reprepro home")
 	listenAddress = flag.String("listen-address", ":8080", "Listen address")
@@ -32,8 +34,13 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	secret, err := base64.StdEncoding.DecodeString(*jweSecret)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	server := &server{
-		token:        *token,
+		decoder:      token.MustNewDecoder(secret, token.DecoderWithTime()),
 		repreproPath: *repreproPath,
 	}
 

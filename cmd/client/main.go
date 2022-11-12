@@ -3,19 +3,25 @@ package main
 import (
 	"archive/tar"
 	"compress/gzip"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/namsral/flag"
+
+	"github.com/rkojedzinszky/reprepro-uploader/pkg/claims"
+	"github.com/rkojedzinszky/reprepro-uploader/pkg/token"
 )
 
 var (
 	outputPath     = flag.String("reprepro-upload-path", "/output", "Path for .deb files")
-	repreproToken  = flag.String("reprepro-token", "", "Token")
+	jweSecret      = flag.String("jwe-secret", "", "Base64 encoded JWE token")
 	repreproServer = flag.String("reprepro-server", "", "Server address")
 	distributions  = flag.String("distribution", "", "Distributions, separated by comma")
 )
@@ -27,6 +33,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	token := genToken()
+
 	r, w := io.Pipe()
 
 	go createTar(w)
@@ -37,7 +45,7 @@ func main() {
 	}
 
 	request.Header.Add("Content-Encoding", "gzip")
-	request.Header.Add("Authorization", fmt.Sprintf("bearer %s", *repreproToken))
+	request.Header.Add("Authorization", fmt.Sprintf("bearer %s", token))
 
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
@@ -87,4 +95,30 @@ func createTar(w io.WriteCloser) {
 		}
 		fh.Close()
 	}
+}
+
+func genToken() string {
+	secret, err := base64.StdEncoding.DecodeString(*jweSecret)
+	if err != nil {
+		log.Fatal(err)
+	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Fatal(err)
+	}
+	encoder, err := token.NewEncoder(secret, token.EncoderWithAge(5*time.Second), token.EncoderWithIssuer(hostname))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	claim := &claims.Claims{
+		Distributions: strings.Split(*distributions, ","),
+	}
+
+	encoded, err := encoder.Encode(claim)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return encoded
 }

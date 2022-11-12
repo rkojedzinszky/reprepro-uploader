@@ -9,6 +9,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/rkojedzinszky/reprepro-uploader/pkg/claims"
+	"github.com/rkojedzinszky/reprepro-uploader/pkg/token"
 )
 
 const (
@@ -17,7 +20,7 @@ const (
 )
 
 type server struct {
-	token        string
+	decoder      token.Decoder
 	repreproPath string
 }
 
@@ -36,7 +39,9 @@ func extractToken(r *http.Request) string {
 }
 
 func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if s.token != "" && extractToken(r) != s.token {
+	claims := &claims.Claims{}
+
+	if err := s.decoder.Decode(extractToken(r), claims); err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -70,10 +75,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cmd.Stdout = out
 	cmd.Stderr = os.Stderr
 
-	dists := r.URL.Query().Get("dists")
-	if dists != "" {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("REPREPRO_REPOS=%s", strings.Join(strings.Split(dists, ","), " ")))
-	}
+	cmd.Env = append(cmd.Env, fmt.Sprintf("REPREPRO_REPOS=%s", strings.Join(claims.Distributions, " ")))
 
 	if err := cmd.Run(); err != nil {
 		log.Print("E: ", err)
