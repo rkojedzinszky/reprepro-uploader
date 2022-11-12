@@ -53,8 +53,12 @@ func main() {
 	}
 
 	if resp.StatusCode != http.StatusAccepted {
-		log.Fatal("Expected http accepted, got: ", resp.StatusCode)
+		fmt.Println("Unexpected response: ", resp.StatusCode)
+	} else {
+		fmt.Println("Success")
 	}
+
+	fmt.Print("\nResponse:\n\n")
 
 	io.Copy(os.Stdout, resp.Body)
 }
