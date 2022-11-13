@@ -15,7 +15,7 @@ for chg in $tmpdir/*.changes ; do
 
 	echo "Processing $(basename "$chg")"
 	for repo in ${REPREPRO_REPOS}; do
-		echo " Including in $repo"
+		echo "   Including in $repo"
 		reprepro --waitforlock=${REPREPRO_WAITFORLOCK:-30} --export=never --keepunreferencedfiles include $repo "$chg"
 	done
 	echo " Done"
