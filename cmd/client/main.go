@@ -39,7 +39,7 @@ func main() {
 
 	go createTar(w)
 
-	request, err := http.NewRequest("PUT", fmt.Sprintf("%s?dists=%s", *repreproServer, *distributions), r)
+	request, err := http.NewRequest("PUT", *repreproServer, r)
 	if err != nil {
 		log.Fatal(err)
 	}
