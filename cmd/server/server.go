@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/rkojedzinszky/reprepro-uploader/pkg/claims"
+	"github.com/rkojedzinszky/reprepro-uploader/pkg/reaper"
 	"github.com/rkojedzinszky/reprepro-uploader/pkg/token"
 )
 
@@ -21,6 +22,7 @@ const (
 type server struct {
 	decoder      token.Decoder
 	repreproPath string
+	reaper       *reaper.Reaper
 }
 
 func extractToken(r *http.Request) string {
@@ -76,6 +78,9 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cmd.Stderr = stderr
 
 	cmd.Env = append(cmd.Env, fmt.Sprintf("REPREPRO_REPOS=%s", strings.Join(claims.Distributions, " ")))
+
+	s.reaper.Lock()
+	defer s.reaper.Unlock()
 
 	if err := cmd.Run(); err != nil {
 		log.Print("E: ", err)

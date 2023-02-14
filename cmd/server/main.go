@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/namsral/flag"
+	"github.com/rkojedzinszky/reprepro-uploader/pkg/reaper"
 	"github.com/rkojedzinszky/reprepro-uploader/pkg/token"
 )
 
@@ -39,24 +40,33 @@ func main() {
 		log.Fatal(err)
 	}
 
+	wg := &sync.WaitGroup{}
+
+	reaper := reaper.New()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		reaper.Run(ctx)
+	}()
+
 	server := &server{
 		decoder:      token.MustNewDecoder(secret, token.DecoderWithTime()),
 		repreproPath: *repreproPath,
+		reaper:       reaper,
 	}
-
-	httpserver := &http.Server{}
-	mux := http.NewServeMux()
-	mux.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-	mux.Handle(*uploadUri, server)
-	httpserver.Handler = mux
-
-	wg := &sync.WaitGroup{}
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
+		httpserver := &http.Server{}
+		mux := http.NewServeMux()
+		mux.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+		mux.Handle(*uploadUri, server)
+		httpserver.Handler = mux
 
 		go func() {
 			<-ctx.Done()
