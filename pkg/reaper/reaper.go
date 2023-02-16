@@ -10,7 +10,7 @@ import (
 )
 
 type Reaper struct {
-	lock sync.Mutex
+	lock sync.RWMutex
 }
 
 func New() *Reaper {
@@ -18,11 +18,11 @@ func New() *Reaper {
 }
 
 func (r *Reaper) Lock() {
-	r.lock.Lock()
+	r.lock.RLock()
 }
 
 func (r *Reaper) Unlock() {
-	r.lock.Unlock()
+	r.lock.RUnlock()
 }
 
 func (r *Reaper) Run(ctx context.Context) {
@@ -46,8 +46,10 @@ func (r *Reaper) Run(ctx context.Context) {
 }
 
 func (r *Reaper) reapall() {
-	r.Lock()
-	defer r.Unlock()
+	if !r.lock.TryLock() {
+		return
+	}
+	defer r.lock.Unlock()
 
 	for {
 		if pid, _ := syscall.Wait4(-1, nil, syscall.WNOHANG, nil); pid <= 0 {
