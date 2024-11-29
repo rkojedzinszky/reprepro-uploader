@@ -1,10 +1,10 @@
 module github.com/rkojedzinszky/reprepro-uploader
 
-go 1.18
+go 1.23
 
 require (
+	github.com/go-jose/go-jose/v4 v4.0.4
 	github.com/namsral/flag v1.7.4-pre
-	gopkg.in/square/go-jose.v2 v2.6.0
 )
 
-require golang.org/x/crypto v0.2.0 // indirect
+require golang.org/x/crypto v0.29.0 // indirect

@@ -3,7 +3,8 @@ package token
 import (
 	"time"
 
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 )
 
 // DecoderOpts represents options applied to each token
@@ -69,7 +70,7 @@ func MustNewDecoder(key []byte, opts ...DecoderOpts) Decoder {
 // Decode validates the token and decodes into data
 // data should only be trusted if returned error is nil
 func (j jwedecoder) Decode(token string, data DataWithClaims, opts ...DecoderOpts) error {
-	object, err := jwt.ParseEncrypted(token)
+	object, err := jwt.ParseEncrypted(token, []jose.KeyAlgorithm{jose.A256GCMKW, jose.DIRECT}, []jose.ContentEncryption{jose.A256GCM})
 	if err != nil {
 		return err
 	}

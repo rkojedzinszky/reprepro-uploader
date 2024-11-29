@@ -1,11 +1,11 @@
 package token_test
 
 import (
-	"math/rand"
+	"crypto/rand"
 	"testing"
 	"time"
 
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/go-jose/go-jose/v4/jwt"
 
 	"github.com/rkojedzinszky/reprepro-uploader/pkg/token"
 )

@@ -3,8 +3,8 @@ package token
 import (
 	"time"
 
-	"gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 )
 
 // EncoderOpts represents options applied to each token
@@ -54,7 +54,7 @@ func NewEncoder(key []byte, opts ...EncoderOpts) (Encoder, error) {
 	encrypter, err := jose.NewEncrypter(
 		jose.A256GCM,
 		jose.Recipient{
-			Algorithm: jose.A256GCMKW,
+			Algorithm: jose.DIRECT,
 			Key:       key,
 		},
 		nil,
@@ -90,7 +90,7 @@ func (j jweencoder) Encode(data DataWithClaims, opts ...EncoderOpts) (token stri
 		opt(claims)
 	}
 
-	token, err = j.builder.Claims(data).CompactSerialize()
+	token, err = j.builder.Claims(data).Serialize()
 
 	return
 }
